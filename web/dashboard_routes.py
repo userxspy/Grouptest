@@ -6,7 +6,7 @@ from utils import temp
 dashboard_routes = web.RouteTableDef()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 🎨 NEW CARD UI CSS — With Smooth Fade-In & Shimmer Effect
+# 🎨 NEW CARD UI CSS — With Grouping Components & Shimmer Effect
 # ─────────────────────────────────────────────────────────────────────────────
 CARD_CSS = """
 <style>
@@ -127,15 +127,22 @@ CARD_CSS = """
 .spin-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:60px 20px;color:var(--muted)}
 .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ⚡ UPGRADE: क्वालिटी चिप्स कंटेनर स्टाइल */
+.group-quality-container { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.q-chip-btn { background:var(--bg4); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; transition:0.12s; }
+.q-chip-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(229,9,20,0.05); }
 </style>
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 🎬 JS ENGINE — Smart Double Pre-fetching Engine Live (Async Decoding Added)
+# 🎬 JS ENGINE — Rebuilt With Dynamic View Mode & Group Multi-Button Selectors
 # ─────────────────────────────────────────────────────────────────────────────
 JS_ENGINE = """
 var curQ='',curOff=0,nextOff='',curCol='all',curPage=1;
 var pMode=localStorage.getItem('posterMode')||'tg';
+// ✅ UPGRADE: डिफ़ॉल्ट रूप से ग्रुप व्यू मोड सेट किया गया
+var curViewMode='group'; 
 var LIMIT_VAL = __LIMIT_PLACEHOLDER__;
 
 var activeFid = '', activeCol = '', cropperInstance = null;
@@ -145,20 +152,20 @@ function closeCdds(){
     document.getElementById('cddColBtn').classList.remove('open');
     document.getElementById('cddModeMenu').style.display='none';
     document.getElementById('cddModeBtn').classList.remove('open');
+    if(document.getElementById('cddViewMenu')) {
+        document.getElementById('cddViewMenu').style.display='none';
+        document.getElementById('cddViewBtn').classList.remove('open');
+    }
 }
 function toggleCdd(which,e){
     if(e){e.stopPropagation();}
-    var menuId=which==='col'?'cddColMenu':'cddModeMenu';
-    var btnId=which==='col'?'cddColBtn':'cddModeBtn';
-    var otherId=which==='col'?'cddModeMenu':'cddColMenu';
-    var otherBtnId=which==='col'?'cddModeBtn':'cddColBtn';
+    var menuId='cdd' + which.charAt(0).toUpperCase() + which.slice(1) + 'Menu';
+    var btnId='cdd' + which.charAt(0).toUpperCase() + which.slice(1) + 'Btn';
     var menu=document.getElementById(menuId);
     var btn=document.getElementById(btnId);
     var isOpen=menu.style.display!=='none';
-    document.getElementById(otherId).style.display='none';
-    document.getElementById(otherBtnId).classList.remove('open');
-    if(isOpen){menu.style.display='none';btn.classList.remove('open');}
-    else{menu.style.display='block';btn.classList.add('open');}
+    closeCdds();
+    if(!isOpen){menu.style.display='block';btn.classList.add('open');}
 }
 function pickCol(val,label,el,e){
     if(e){e.stopPropagation();}
@@ -166,8 +173,7 @@ function pickCol(val,label,el,e){
     document.getElementById('cddColLabel').textContent=label;
     document.querySelectorAll('#cddColMenu .cdd-item').forEach(function(i){i.classList.remove('selected');});
     el.classList.add('selected');
-    document.getElementById('cddColMenu').style.display='none';
-    document.getElementById('cddColBtn').classList.remove('open');
+    closeCdds();
     if(curQ)doSearch(0);
 }
 function pickMode(val,label,el,e){
@@ -177,17 +183,23 @@ function pickMode(val,label,el,e){
     document.getElementById('cddModeLabel').textContent=label;
     document.querySelectorAll('#cddModeMenu .cdd-item').forEach(function(i){i.classList.remove('selected');});
     el.classList.add('selected');
-    document.getElementById('cddModeMenu').style.display='none';
-    document.getElementById('cddModeBtn').classList.remove('open');
+    closeCdds();
     if(curQ)doSearch(curOff);
 }
+// ✅ UPGRADE: व्यू मोड टॉगल हैंडलर (ग्रुप बनाम सिंगल फ़ाइल)
+function pickViewMode(val,label,el,e){
+    if(e){e.stopPropagation();}
+    curViewMode=val;
+    document.getElementById('cddViewLabel').textContent=label;
+    document.querySelectorAll('#cddViewMenu .cdd-item').forEach(function(i){i.classList.remove('selected');});
+    el.classList.add('selected');
+    closeCdds();
+    if(curQ)doSearch(0);
+}
+
 document.addEventListener('click',function(e){
     if(!e.target.closest('.cdd-wrap')){closeCdds();}
 });
-document.querySelectorAll('.cdd-menu').forEach(function(m){
-    m.addEventListener('click',function(e){e.stopPropagation();});
-});
-function changeCol(val){curCol=val;if(curQ)doSearch(0);}
 
 function handleThumbError(fileId) {
     var img = document.getElementById('img-poster-' + fileId);
@@ -235,10 +247,11 @@ async function doSearch(o){
 
     var resDiv=document.getElementById('results');
     resDiv.className='res-grid mode-'+pMode;
-    resDiv.innerHTML='<div class="spin-wrap"><div class="spinner"></div><span>Searching...</span></div>';
+    resDiv.innerHTML='<div class="spin-wrap"><div class="spinner"></div><span>Searching Matrix...</span></div>';
 
     try{
-        var r=await fetch('/api/search?q='+encodeURIComponent(q)+'&offset='+o+'&col='+curCol+'&mode='+pMode);
+        // ✅ UPGRADE: एपीआई रिक्वेस्ट में view_mode पैरामीटर अटैच किया गया
+        var r=await fetch('/api/search?q='+encodeURIComponent(q)+'&offset='+o+'&col='+curCol+'&mode='+pMode+'&view_mode='+curViewMode);
         if(!r.ok){showToast('Error fetching','error');return;}
         var d=await r.json();
         if(d.error){showToast(d.error,'error');return;}
@@ -247,6 +260,12 @@ async function doSearch(o){
             resDiv.innerHTML='<div class="empty"><div class="empty-icon">&#9888;</div><p>No titles found for "'+q+'"</p></div>';
             document.getElementById('pageBox').style.display='none';return;
         }
+
+        // ✅ UPGRADE: यदि एडमिन लॉगिन है तो टॉगल ड्रॉपडाउन अनहाइड (Show) करें
+        if(d.is_admin && document.getElementById('cddViewWrap')) {
+            document.getElementById('cddViewWrap').style.display = 'block';
+        }
+
         var h='';
         d.results.forEach(function(f){
             var sc=(f.source||'primary').toLowerCase();
@@ -255,10 +274,18 @@ async function doSearch(o){
             var adminBtns='';
             if(d.is_admin){
                 var safeName=f.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'");
-                adminBtns='<div class="poster-admin">'+
-                    '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\',\\''+safeName+'\\')">&#9999; Edit</button>'+
-                    '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\')">&#128465; Delete</button>'+
-                '</div>';
+                if(f.is_group) {
+                    // 📋 ग्रुप व्यू मोड में एडमिन के लिए मास्टर ग्रुप आईडी कॉपी बटन
+                    adminBtns='<div class="poster-admin">'+
+                        '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+f.group_id+'\');showToast(\'📋 Group ID Copied!\')">📋 Copy Group ID</button>'+
+                    '</div>';
+                } else {
+                    // ✏️ सिंगल फ़ाइल व्यू मोड में एडमिन के लिए पूर्ण एडिट/डिलीट फॉर्म क्रेडेंशियल्स
+                    adminBtns='<div class="poster-admin">'+
+                        '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\',\\''+safeName+'\\',\\''+(f.group_id||'')+'\\')">&#9999; Edit</button>'+
+                        '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\')">&#128465; Delete</button>'+
+                    '</div>';
+                }
             }
 
             var posterHtml='';
@@ -283,18 +310,46 @@ async function doSearch(o){
                 '</div>';
                 if(d.is_admin){
                     var safeName2=f.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'");
-                    textInfo+='<div class="text-admin-row">'+
-                        '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\',\\''+safeName2+'\\')">&#9999; Edit</button>'+
-                        '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\')">&#128465; Delete</button>'+
-                    '</div>';
+                    if(f.is_group) {
+                        textInfo+='<div class="text-admin-row">'+
+                            '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+f.group_id+'\');showToast(\'📋 Group ID Copied!\')">📋 Copy Group ID</button>'+
+                        '</div>';
+                    } else {
+                        textInfo+='<div class="text-admin-row">'+
+                            '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\',\\''+safeName2+'\\',\\''+(f.group_id||'')+'\\')">&#9999; Edit</button>'+
+                            '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\')">&#128465; Delete</button>'+
+                        '</div>';
+                    }
                 }
+            }
+
+            // ⚡ UPGRADE: यदि कार्ड ग्रुप ऑब्जेक्ट है, तो अंदर की सब-फाइलों के लिए सुंदर चिप्स रेंडर करें
+            var qualityChipsHtml = '';
+            var titleOnclickHtml = 'window.open(\\''+f.watch+'\\',\\'_blank\\')';
+            
+            if(f.is_group && f.files) {
+                titleOnclickHtml = "toggleAdminBtns(this.closest('.file-card'), event)";
+                qualityChipsHtml = '<div class="group-quality-container">';
+                f.files.forEach(function(subFile) {
+                    var qLabel = 'Link';
+                    var nLower = subFile.name.toLowerCase();
+                    if(nLower.includes('1080p')) qLabel = '1080p';
+                    else if(nLower.includes('720p')) qLabel = '720p';
+                    else if(nLower.includes('480p')) qLabel = '480p';
+                    else if(nLower.includes('4k') || nLower.includes('uhd')) qLabel = '4K UHD';
+                    else qLabel = subFile.size;
+                    
+                    qualityChipsHtml += '<button class="q-chip-btn" onclick="event.stopPropagation();window.open(\\''+subFile.watch+'\\',\\'_blank\\')">' + qLabel + ' ('+subFile.size+')</button>';
+                });
+                qualityChipsHtml += '</div>';
             }
 
             h+='<div class="file-card">'+
                 posterHtml+
                 textInfo+
                 '<div class="fc-body">'+
-                    '<div class="fc-name" id="name-title-'+f.file_id+'" onclick="window.open(\\''+f.watch+'\\',\\'_blank\\')">'+f.name+'</div>'+
+                    '<div class="fc-name" id="name-title-'+f.file_id+'" onclick="'+titleOnclickHtml+'">'+f.name+'</div>'+
+                    qualityChipsHtml+  // क्वालिटी चिप्स यहाँ इंजेक्ट होंगे
                 '</div>'+
             '</div>';
         });
@@ -306,7 +361,7 @@ async function doSearch(o){
         document.getElementById('pgInfo').textContent='Page '+curPage;
 
         if(nextOff) {
-            fetch('/api/search?q='+encodeURIComponent(q)+'&offset='+nextOff+'&col='+curCol+'&mode='+pMode);
+            fetch('/api/search?q='+encodeURIComponent(q)+'&offset='+nextOff+'&col='+curCol+'&mode='+pMode+'&view_mode='+curViewMode);
         }
     }catch(e){showToast('Network error','error');}
 }
@@ -335,7 +390,7 @@ async function deleteFile(fid,col){
     }catch(e){showToast('Delete failed','error');}
 }
 
-function editFile(fid, col, currentName){
+function editFile(fid, col, currentName, groupId){
     activeFid = fid; 
     activeCol = col;
     if(cropperInstance){cropperInstance.destroy();cropperInstance=null;}
@@ -343,13 +398,17 @@ function editFile(fid, col, currentName){
     document.getElementById('emFile').value='';
     document.getElementById('cropContainer').style.display='none';
 
-    // 🌟 MAGIC: एडिट पैनल में नए इनपुट फील्ड्स को ऑटोमैटिकली इंजेक्ट करना
+    // 🌟 UPGRADE: एडिट पैनल में कैप्शन के साथ-साथ 'Custom Group ID' इनपुट बॉक्स इंजेक्ट करना
     var emNameInput = document.getElementById('emName');
     if(!document.getElementById('emAddCaption')) {
         var extraHtml = `
             <div style="margin-top:14px; text-align:left;">
                 <label style="font-size:12px;color:var(--accent);font-weight:700;">➕ Add Search Tags to Caption (Optional)</label>
                 <input type="text" id="emAddCaption" placeholder="e.g. Ajay Devgan, 1080p, Comedy..." style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;box-sizing:border-box;">
+            </div>
+            <div style="margin-top:14px; text-align:left;">
+                <label style="font-size:12px;color:var(--accent);font-weight:700;">📦 Custom Group ID (Leave blank for auto-group)</label>
+                <input type="text" id="emGroupId" placeholder="e.g. pushpa-2-2024" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;box-sizing:border-box;">
             </div>
             <div style="margin-top:14px; margin-bottom:12px; text-align:left;">
                 <label style="font-size:12px;color:var(--accent);font-weight:700;">📂 Move File to Collection</label>
@@ -363,10 +422,11 @@ function editFile(fid, col, currentName){
         emNameInput.insertAdjacentHTML('afterend', extraHtml);
     }
 
-    // करंट कलेक्शन को सिलेक्ट बॉक्स में सेट करें और टैग्स इनपुट खाली करें
+    // वैल्यू सिंक
     if(document.getElementById('emMoveCol')) {
         document.getElementById('emMoveCol').value = col;
         document.getElementById('emAddCaption').value = ''; 
+        document.getElementById('emGroupId').value = groupId || ''; // वर्तमान ग्रुप आईडी लोड करें
     }
 
     var prevBox=document.getElementById('emPreviewBox');
@@ -403,9 +463,10 @@ function handleLocalPreview(input){
 
 async function saveAllChanges(){
     var newName=document.getElementById('emName').value.trim();
-    // नया: टैग्स और ड्रॉपडाउन की वैल्यू पढ़ें
     var addCaption=document.getElementById('emAddCaption') ? document.getElementById('emAddCaption').value.trim() : '';
     var moveCol=document.getElementById('emMoveCol') ? document.getElementById('emMoveCol').value : activeCol;
+    // ✅ UPGRADE: ग्रुप आईडी वैल्यू रीड करना
+    var groupId=document.getElementById('emGroupId') ? document.getElementById('emGroupId').value.trim() : '';
 
     if(!newName){showToast('File name cannot be empty!','error');return;}
     var btn=document.getElementById('emSaveBtn');
@@ -427,13 +488,14 @@ async function saveAllChanges(){
         }
         showToast('\\ud83d\\udcbe Updating DB & Collection...');
         
-        // नया पेलोड जिसमें टैग्स और कलेक्शन मूवमेंट का डेटा भी है
+        // ✅ UPGRADE: पेलोड में group_id सिंक किया गया
         var payload = {
             file_id: activeFid,
             collection: activeCol,
             new_name: newName,
             add_caption: addCaption,
-            target_collection: moveCol
+            target_collection: moveCol,
+            group_id: groupId
         };
 
         var r=await fetch('/api/edit_name',{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'application/json'}});
@@ -443,15 +505,8 @@ async function saveAllChanges(){
             showToast('\\u2728 File updated successfully!');
             closeCombinedModal();
             
-            // अगर फाइल किसी दूसरे कलेक्शन में मूव हुई है, तो पूरा ग्रिड रिफ्रेश करें
-            if(activeCol !== moveCol) {
-                doSearch(curOff);
-            } else {
-                // अगर सिर्फ नाम या टैग ऐड हुआ है, तो बिना हिले सिर्फ टेक्स्ट अपडेट करें
-                reloadThumb(activeFid, activeCol);
-                var titleEl = document.getElementById('name-title-' + activeFid);
-                if(titleEl) { titleEl.textContent = newName; }
-            }
+            // डेटा सिंक री-लोड़ ग्रिड
+            doSearch(curOff);
         }else{showToast(res.error||'Metadata save failed!','error');}
     }catch(e){showToast('Network synchronization error','error');}
     finally{btn.disabled=false;btn.innerText='Save Changes';}
@@ -459,7 +514,7 @@ async function saveAllChanges(){
 """.replace("__LIMIT_PLACEHOLDER__", str(MAX_WEB_RESULTS))
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 🏠 SEARCH ZONE HTML
+# 🏠 SEARCH ZONE HTML (With Admin Toggle Injection Box)
 # ─────────────────────────────────────────────────────────────────────────────
 SEARCH_ZONE = (
     '<div class="search-zone">'
@@ -492,6 +547,17 @@ SEARCH_ZONE = (
                     '<div class="cdd-item" data-val="none" onclick="pickMode(\'none\',\'\u26a1 Text Only (Fastest)\',this)">\u26a1 Text Only (Fastest)<span class="cdd-radio"><span class="cdd-radio-dot"></span></span></div>'
                 '</div>'
             '</div>'
+            # ⚡ UPGRADE: एडमिन के लिए लाइव 'सर्च मोड व्यू' स्विच टॉगल (शुरुआत में डिफ़ॉल्ट रूप से हिडन रहेगा)
+            '<div class="cdd-wrap" id="cddViewWrap" style="display:none">'
+                '<div class="cdd-btn" id="cddViewBtn" onclick="toggleCdd(\'view\')">'
+                    '<span id="cddViewLabel">👥 Group View</span>'
+                '</div>'
+                '<span class="cdd-arrow">&#9660;</span>'
+                '<div class="cdd-menu" id="cddViewMenu" style="display:none">'
+                    '<div class="cdd-item selected" data-val="group" onclick="pickViewMode(\'group\',\'👥 Group View\',this)">👥 Group View<span class="cdd-radio"><span class="cdd-radio-dot"></span></span></div>'
+                    '<div class="cdd-item" data-val="single" onclick="pickViewMode(\'single\',\'📄 Single File View\',this)">📄 Single File View<span class="cdd-radio"><span class="cdd-radio-dot"></span></span></div>'
+                '</div>'
+            '</div>'
         '</div>'
     '</div>'
     '<div class="main" style="padding-top:4px;">'
@@ -514,7 +580,6 @@ SEARCH_ZONE = (
 )
 
 # ✅ OPTIMIZATION 1: Pre-compile the entire body string ONCE when the app starts.
-# Saves RAM and CPU cycles on every user request.
 DASHBOARD_BODY = CARD_CSS + SEARCH_ZONE + f"<script>{JS_ENGINE}</script>"
 
 
@@ -528,7 +593,6 @@ async def dash(req):
         if not mp.get("premium"):
             return web.HTTPFound('/premium_expired')
 
-    # Reusing the pre-compiled DASHBOARD_BODY
     return build_page("Home - Fast Finder", DASHBOARD_BODY, "", "dash", role)
 
 
@@ -565,8 +629,6 @@ async def premium_expired(req):
     return build_page("Premium Expired", form_wrapper("Premium Expired", content), "login-bg")
 
 
-# ✅ OPTIMIZATION 2: Koyeb Health Check Route
-# Essential for Koyeb deployments. It prevents the MicroVM from restarting.
 @dashboard_routes.get('/health')
 async def koyeb_health_check(req):
     return web.json_response({"status": "alive", "platform": "koyeb"})
