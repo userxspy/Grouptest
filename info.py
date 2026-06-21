@@ -77,7 +77,7 @@ if not BIN_CHANNEL:
     logger.error("❌ BIN_CHANNEL missing")
     exit(1)
 
-# ⚡ [NEW FEATURE] नए पृथक मीडिया और थंबनेल स्टोरेज चैनल्स
+# ⚡ [NEW FEATURE] नए पृथक media और थंबनेल स्टोरेज चैनल्स
 # (यदि पर्यावरण वेरिएबल्स सेट नहीं हैं, तो यह सुरक्षित रूप से BIN_CHANNEL पर फॉल-बैक करेगा)
 ACTOR_STORAGE_CHANNEL = int(environ.get("ACTOR_STORAGE_CHANNEL", BIN_CHANNEL))
 THUMBNAIL_STORAGE_CHANNEL = int(environ.get("THUMBNAIL_STORAGE_CHANNEL", BIN_CHANNEL))
@@ -100,6 +100,9 @@ TIME_ZONE = environ.get("TIME_ZONE", "Asia/Kolkata")
 # बोट के बटन्स (12) और वेब/मिनी ऐप (21) की स्वतंत्र रिज़ल्ट लिमिट
 MAX_BOT_RESULTS = int(environ.get("MAX_BOT_RESULTS", 12)) 
 MAX_WEB_RESULTS = int(environ.get("MAX_WEB_RESULTS", 21)) 
+
+# ⚡ [NEW VARIABLE] डिफ़ॉल्ट सर्च मोड (group या single) - मल्टी-क्वालिटी बंडलिंग के लिए
+DEFAULT_VIEW_MODE = environ.get("DEFAULT_VIEW_MODE", "group").lower()
 
 # ─────────────────────────────────────────────
 # ⏳ TIMERS ENGINE (सेंट्रलाइज्ड कस्टमाइजेबल टाइमर्स)
@@ -131,7 +134,7 @@ IS_PREMIUM = is_enabled("IS_PREMIUM", True)
 FILE_CAPTION = environ.get("FILE_CAPTION", script.FILE_CAPTION)
 
 # ─────────────────────────────────────────────
-# 🎥 STREAM ENGINE & WEB APP DOMAIN CONVERTER
+# 👑 STREAM ENGINE & WEB APP DOMAIN CONVERTER
 # ─────────────────────────────────────────────
 URL = environ.get("URL", "").strip()
 if not URL:
