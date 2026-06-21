@@ -140,7 +140,7 @@ async def save_file(media, collection_type="primary"):
             if existing_doc.get("file_ref") == media.file_id: return "dup"
             old_thumb = existing_doc.get("thumb_url")
             thumb_url = old_thumb if old_thumb and old_thumb != "NO_THUMB" else None
-            group_id = existing_doc.get("group_id", "") # पुराना ग्रुप आईडी सुरक्षित रखें
+            group_id = existing_doc.get("group_id", "") 
         else:
             thumb_url = None
             group_id = ""
@@ -188,7 +188,6 @@ async def _search(col, raw_query: str, regex, offset: int, limit: int, lang=None
     words = clean_query.split() if clean_query else []
     strict_query = " ".join(f'"{word}"' for word in words) if words else ""
 
-    # 💡 ग्रुप मोड में बंडलिंग करने के लिए हम ज्यादा फाइल्स फेच करेंगे ताकि पेज खाली न रहे
     fetch_limit = limit * 6 if view_mode == "group" else limit
     fetch_offset = 0 if view_mode == "group" else offset
 
@@ -223,15 +222,14 @@ async def _search(col, raw_query: str, regex, offset: int, limit: int, lang=None
         grouped_dict = {}
         for d in docs:
             g_id = d.get("group_id", "").strip()
-            clean_title = extract_clean_name(d["file_name"])
-            # नियम: अगर मैनुअल ग्रुप आईडी सेट है तो उसे लो, वरना ऑटो-क्लीन नाम को ग्रुप की (Key) बनाओ
+            clean_title = extract_clean_name(d.get("file_name", "Unknown File"))
             group_key = g_id if g_id else clean_title.lower()
 
             if group_key not in grouped_dict:
                 grouped_dict[group_key] = {
                     "_id": d["_id"],
                     "file_id": d["_id"],
-                    "file_name": clean_title,  # मास्टर कार्ड हेडिंग
+                    "file_name": clean_title,  
                     "thumb_url": d.get("thumb_url"),
                     "file_type": d.get("file_type", "document"),
                     "caption": d.get("caption", ""),
@@ -240,22 +238,20 @@ async def _search(col, raw_query: str, regex, offset: int, limit: int, lang=None
                     "files": []
                 }
             
-            # ग्रुप के अंदर अगर किसी भी एक फाइल में वर्किंग थंबनेल है, तो उसे मास्टर पोस्टर बना दो
             if (not grouped_dict[group_key]["thumb_url"] or grouped_dict[group_key]["thumb_url"] == "NO_THUMB") and d.get("thumb_url") and d.get("thumb_url") != "NO_THUMB":
                 grouped_dict[group_key]["thumb_url"] = d["thumb_url"]
 
-            # इस ग्रुप के सब-एरे (Quality List) में इस फाइल को डालो
+            # ✅ FIX: मुख्य सर्च बंडलिंग इंजन में सुरक्षित डिक्शनरी फ़ालबैक
             grouped_dict[group_key]["files"].append({
                 "file_id": d["_id"],
-                "file_name": d["file_name"],
-                "file_size": d["file_size"],
-                "file_type": d["file_type"],
-                "file_ref": d["file_ref"],
+                "file_name": d.get("file_name", "Unknown File"),
+                "file_size": d.get("file_size", 0),
+                "file_type": d.get("file_type", "document"),
+                "file_ref": d.get("file_ref") or d["_id"],
                 "caption": d.get("caption", ""),
                 "thumb_url": d.get("thumb_url")
             })
 
-        # डिक्शनरी को वापस लिस्ट में बदलें और पेज लिमिट के अनुसार काटें (Pagination)
         grouped_docs = list(grouped_dict.values())
         paginated_docs = grouped_docs[offset:offset+limit]
         
@@ -266,7 +262,7 @@ async def _search(col, raw_query: str, regex, offset: int, limit: int, lang=None
             
         return paginated_docs, count
 
-    # 📄 CONDITION 2: जब एडमिन "Single View" मोड में देखना चाहता है (Bypass Grouping)
+    # 📄 CONDITION 2: जब एडमिन "Single View" मोड में देखना चाहता है 
     if bypass_count: count = 0
     else:
         flt_query = text_flt if is_text_search else (reg_flt if 'reg_flt' in locals() else {})
@@ -390,7 +386,6 @@ async def get_actor_search_results(actor_name, tags_list, max_results, offset=0,
     
     for col in cols:
         cursor = col.find(reg_flt, {"_id": 1, "file_name": 1, "file_size": 1, "file_type": 1, "file_ref": 1, "caption": 1, "thumb_url": 1, "group_id": 1}).sort('_id', -1)
-        # ग्रुप व्यू में ज्यादा डेटा फेच करेंगे ताकि बंडलिंग सही से हो
         f_lim = max_results * 6 if view_mode == "group" else max_results
         f_off = 0 if view_mode == "group" else offset
         
@@ -407,7 +402,7 @@ async def get_actor_search_results(actor_name, tags_list, max_results, offset=0,
         grouped_dict = {}
         for d in results:
             g_id = d.get("group_id", "").strip()
-            clean_title = extract_clean_name(d["file_name"])
+            clean_title = extract_clean_name(d.get("file_name", "Unknown File"))
             group_key = g_id if g_id else clean_title.lower()
 
             if group_key not in grouped_dict:
@@ -427,12 +422,13 @@ async def get_actor_search_results(actor_name, tags_list, max_results, offset=0,
             if (not grouped_dict[group_key]["thumb_url"] or grouped_dict[group_key]["thumb_url"] == "NO_THUMB") and d.get("thumb_url") and d.get("thumb_url") != "NO_THUMB":
                 grouped_dict[group_key]["thumb_url"] = d["thumb_url"]
 
+            # ✅ FIX: एक्टर बंडलिंग इंजन में KeyError रोकने के लिए सुरक्षित फ़ालबैक पैच
             grouped_dict[group_key]["files"].append({
                 "file_id": d["_id"],
-                "file_name": d["file_name"],
-                "file_size": d["file_size"],
-                "file_type": d["file_type"],
-                "file_ref": d["file_ref"],
+                "file_name": d.get("file_name", "Unknown File"),
+                "file_size": d.get("file_size", 0),
+                "file_type": d.get("file_type", "document"),  # 🛡️ पैच: डिफ़ॉल्ट रूप से document सेट
+                "file_ref": d.get("file_ref") or d["_id"],
                 "caption": d.get("caption", ""),
                 "thumb_url": d.get("thumb_url"),
                 "source_col": d.get("source_col", "primary")
