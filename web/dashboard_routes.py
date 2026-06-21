@@ -37,12 +37,10 @@ CARD_CSS = """
 .search-btn{position:relative;overflow:hidden;flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:0 20px;height:38px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:transform .15s,box-shadow .15s,background .15s;letter-spacing:.3px}
 .search-btn:hover{background:var(--accent-hover);transform:scale(1.03);box-shadow:0 6px 22px rgba(229,9,20,0.50)}
 .search-btn:active{transform:scale(.96)}
-/* ripple */
 .search-btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);border-radius:inherit;pointer-events:none}
 .search-btn.ripple-go::after{animation:btnRipple .45s ease-out forwards}
 @keyframes btnRipple{0%{background:rgba(255,255,255,0.28);transform:scale(.6)}100%{background:rgba(255,255,255,0);transform:scale(1.6)}}
 
-/* ── Custom dropdown ── */
 .cdd-wrap{flex:0 1 auto;min-width:0;position:relative;user-select:none}
 .cdd-btn{width:auto;background:var(--bg3);color:var(--text);border:1.5px solid var(--border);border-radius:999px;padding:8px 28px 8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:border-color .15s,box-shadow .15s}
 .cdd-btn:hover,.cdd-btn.open{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,9,20,0.12)}
@@ -59,16 +57,13 @@ CARD_CSS = """
 .cdd-radio-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:none}
 .cdd-item.selected .cdd-radio-dot{display:block}
 
-/* ── Results grid ── */
 .res-grid{display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:24px}
 @media(min-width:600px){.res-grid{grid-template-columns:repeat(3,1fr);gap:14px}}
 .res-grid.mode-none .poster-box{display:none}
 
-/* ── File card ── */
 .file-card{background:var(--card);border-radius:6px;overflow:hidden;border:1px solid var(--border);transition:transform .22s cubic-bezier(.4,0,.2,1),box-shadow .22s,border-color .22s;cursor:pointer}
 .file-card:hover{transform:translateY(-4px);border-color:rgba(229,9,20,.4);box-shadow:0 14px 36px rgba(0,0,0,.6),0 0 0 1px rgba(229,9,20,.2)}
 
-/* ── Poster box (With Shimmer Effect) ── */
 .poster-box{position:relative;padding-top:56.25%;background:linear-gradient(90deg, var(--bg3) 0px, var(--bg4) 50%, var(--bg3) 100%);background-size:200% 100%;animation:shimmer 1.5s infinite linear;overflow:hidden}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .fc-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.25s ease-in-out, transform 0.35s ease}
@@ -76,7 +71,6 @@ CARD_CSS = """
 .file-card:hover .fc-poster{transform:scale(1.05)}
 .thumb-error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#1f1f1f;z-index:2}
 
-/* ── Poster top row: Type · Size · Source ── */
 .poster-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:5px;padding:8px;z-index:3}
 .type-chip{background:rgba(0,0,0,.72);backdrop-filter:blur(8px);color:#fff;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:800;letter-spacing:.8px;border:1px solid rgba(255,255,255,.14);line-height:1.4}
 .size-chip{background:rgba(0,0,0,.60);backdrop-filter:blur(8px);color:#e0e0e0;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.08);line-height:1.4}
@@ -89,10 +83,8 @@ CARD_CSS = """
 .cloud .source-dot{background:#60a5fa;box-shadow:0 0 4px #60a5fa}
 .archive .source-dot{background:#fb923c;box-shadow:0 0 4px #fb923c}
 
-/* ── Poster bottom row: Edit | Delete (admin only) ── */
 .poster-admin{position:absolute;bottom:0;left:0;right:0;display:flex;gap:6px;padding:7px 8px;opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .22s ease;pointer-events:none;z-index:4}
 .file-card.admin-active .poster-admin{opacity:1;transform:translateY(0);pointer-events:all}
-/* text-only admin row */
 .text-admin-row{display:none;gap:5px;padding:5px 11px 0}
 .file-card.admin-active .text-admin-row{display:flex}
 .btn-edit,.btn-del{flex:1;padding:6px 0;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:background .12s,transform .1s;border:none}
@@ -103,17 +95,14 @@ CARD_CSS = """
 .btn-del:hover{background:rgba(229,9,20,.92)}
 .btn-del:active{transform:scale(.93)}
 
-/* ── Card body ── */
 .fc-body{padding:10px 11px 12px}
 .fc-name{color:var(--text);font-size:12.5px;font-weight:600;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;transition:color .18s;text-decoration:none}
 .fc-name:hover{color:var(--accent);text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:2px}
 
-/* ── Text-only mode info row ── */
 .fc-text-info{display:flex;align-items:center;gap:6px;padding:10px 11px 0;flex-wrap:wrap;margin-bottom:4px}
 .tc-type{background:var(--bg4);color:var(--muted);border-radius:5px;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:.8px;border:1px solid var(--border)}
 .tc-size{color:var(--muted);font-size:11px}
 
-/* ── Pagination ── */
 .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px}
 .pg-btn{background:var(--bg4);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s,transform .15s,box-shadow .15s}
 .pg-btn:disabled{background:var(--bg3);color:var(--muted);cursor:not-allowed;opacity:.45}
@@ -121,14 +110,12 @@ CARD_CSS = """
 .pg-btn:not(:disabled):active{transform:scale(.93);box-shadow:none}
 .pg-info{color:var(--muted);font-size:12px;font-weight:600}
 
-/* ── Empty / Loading ── */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty-icon{font-size:36px;margin-bottom:12px}
 .spin-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:60px 20px;color:var(--muted)}
 .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ⚡ UPGRADE: क्वालिटी चिप्स कंटेनर स्टाइल */
 .group-quality-container { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .q-chip-btn { background:var(--bg4); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; transition:0.12s; }
 .q-chip-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(229,9,20,0.05); }
@@ -136,12 +123,11 @@ CARD_CSS = """
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 🎬 JS ENGINE — Rebuilt With Dynamic View Mode & Group Multi-Button Selectors
+# 🎬 JS ENGINE — Fixed String Concatenation & Absolute Cross-Network Isolation
 # ─────────────────────────────────────────────────────────────────────────────
 JS_ENGINE = """
 var curQ='',curOff=0,nextOff='',curCol='all',curPage=1;
 var pMode=localStorage.getItem('posterMode')||'tg';
-// ✅ UPGRADE: डिफ़ॉल्ट रूप से ग्रुप व्यू मोड सेट किया गया
 var curViewMode='group'; 
 var LIMIT_VAL = __LIMIT_PLACEHOLDER__;
 
@@ -186,7 +172,6 @@ function pickMode(val,label,el,e){
     closeCdds();
     if(curQ)doSearch(curOff);
 }
-// ✅ UPGRADE: व्यू मोड टॉगल हैंडलर (ग्रुप बनाम सिंगल फ़ाइल)
 function pickViewMode(val,label,el,e){
     if(e){e.stopPropagation();}
     curViewMode=val;
@@ -250,7 +235,6 @@ async function doSearch(o){
     resDiv.innerHTML='<div class="spin-wrap"><div class="spinner"></div><span>Searching Matrix...</span></div>';
 
     try{
-        // ✅ UPGRADE: एपीआई रिक्वेस्ट में view_mode पैरामीटर अटैच किया गया
         var r=await fetch('/api/search?q='+encodeURIComponent(q)+'&offset='+o+'&col='+curCol+'&mode='+pMode+'&view_mode='+curViewMode);
         if(!r.ok){showToast('Error fetching','error');return;}
         var d=await r.json();
@@ -261,7 +245,6 @@ async function doSearch(o){
             document.getElementById('pageBox').style.display='none';return;
         }
 
-        // ✅ UPGRADE: यदि एडमिन लॉगिन है तो टॉगल ड्रॉपडाउन अनहाइड (Show) करें
         if(d.is_admin && document.getElementById('cddViewWrap')) {
             document.getElementById('cddViewWrap').style.display = 'block';
         }
@@ -275,15 +258,14 @@ async function doSearch(o){
             if(d.is_admin){
                 var safeName=f.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'");
                 if(f.is_group) {
-                    // 📋 ग्रुप व्यू मोड में एडमिन के लिए मास्टर ग्रुप आईडी कॉपी बटन
                     adminBtns='<div class="poster-admin">'+
-                        '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+f.group_id+'\');showToast(\'📋 Group ID Copied!\')">📋 Copy Group ID</button>'+
+                        '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\\\''+f.group_id+'\\\');showToast(\\\'📋 Group ID Copied!\\\')">📋 Copy Group ID</button>'+
                     '</div>';
                 } else {
-                    // ✏️ सिंगल फ़ाइल व्यू मोड में एडमिन के लिए पूर्ण एडिट/डिलीट फॉर्म क्रेडेंशियल्स
+                    // ✅ FIXED: मल्टिपल एस्केपिंग बैकटैक्स पैच
                     adminBtns='<div class="poster-admin">'+
-                        '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\',\\''+safeName+'\\',\\''+(f.group_id||'')+'\\')">&#9999; Edit</button>'+
-                        '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\')">&#128465; Delete</button>'+
+                        '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\',\\\''+safeName+'\\\',\\\''+(f.group_id||'')+'\\\')">&#9999; Edit</button>'+
+                        '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\')">&#128465; Delete</button>'+
                     '</div>';
                 }
             }
@@ -312,20 +294,19 @@ async function doSearch(o){
                     var safeName2=f.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'");
                     if(f.is_group) {
                         textInfo+='<div class="text-admin-row">'+
-                            '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+f.group_id+'\');showToast(\'📋 Group ID Copied!\')">📋 Copy Group ID</button>'+
+                            '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\\\''+f.group_id+'\\\');showToast(\\\'📋 Group ID Copied!\\\')">📋 Copy Group ID</button>'+
                         '</div>';
                     } else {
                         textInfo+='<div class="text-admin-row">'+
-                            '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\',\\''+safeName2+'\\',\\''+(f.group_id||'')+'\\')">&#9999; Edit</button>'+
-                            '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\''+f.file_id+'\\',\\''+f.raw_collection+'\\')">&#128465; Delete</button>'+
+                            '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\',\\\''+safeName2+'\\\',\\\''+(f.group_id||'')+'\\\')">&#9999; Edit</button>'+
+                            '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\')">&#128465; Delete</button>'+
                         '</div>';
                     }
                 }
             }
 
-            // ⚡ UPGRADE: यदि कार्ड ग्रुप ऑब्जेक्ट है, तो अंदर की सब-फाइलों के लिए सुंदर चिप्स रेंडर करें
             var qualityChipsHtml = '';
-            var titleOnclickHtml = 'window.open(\\''+f.watch+'\\',\\'_blank\\')';
+            var titleOnclickHtml = 'window.open(\\\''+f.watch+'\\\',\\\'_blank\\\')';
             
             if(f.is_group && f.files) {
                 titleOnclickHtml = "toggleAdminBtns(this.closest('.file-card'), event)";
@@ -339,7 +320,7 @@ async function doSearch(o){
                     else if(nLower.includes('4k') || nLower.includes('uhd')) qLabel = '4K UHD';
                     else qLabel = subFile.size;
                     
-                    qualityChipsHtml += '<button class="q-chip-btn" onclick="event.stopPropagation();window.open(\\''+subFile.watch+'\\',\\'_blank\\')">' + qLabel + ' ('+subFile.size+')</button>';
+                    qualityChipsHtml += '<button class="q-chip-btn" onclick="event.stopPropagation();window.open(\\\''+subFile.watch+'\\\,\\\'_blank\\\')">' + qLabel + ' ('+subFile.size+')</button>';
                 });
                 qualityChipsHtml += '</div>';
             }
@@ -349,7 +330,7 @@ async function doSearch(o){
                 textInfo+
                 '<div class="fc-body">'+
                     '<div class="fc-name" id="name-title-'+f.file_id+'" onclick="'+titleOnclickHtml+'">'+f.name+'</div>'+
-                    qualityChipsHtml+  // क्वालिटी चिप्स यहाँ इंजेक्ट होंगे
+                    qualityChipsHtml+  
                 '</div>'+
             '</div>';
         });
@@ -398,35 +379,31 @@ function editFile(fid, col, currentName, groupId){
     document.getElementById('emFile').value='';
     document.getElementById('cropContainer').style.display='none';
 
-    // 🌟 UPGRADE: एडिट पैनल में कैप्शन के साथ-साथ 'Custom Group ID' इनपुट बॉक्स इंजेक्ट करना
     var emNameInput = document.getElementById('emName');
     if(!document.getElementById('emAddCaption')) {
-        var extraHtml = `
-            <div style="margin-top:14px; text-align:left;">
-                <label style="font-size:12px;color:var(--accent);font-weight:700;">➕ Add Search Tags to Caption (Optional)</label>
-                <input type="text" id="emAddCaption" placeholder="e.g. Ajay Devgan, 1080p, Comedy..." style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;box-sizing:border-box;">
-            </div>
-            <div style="margin-top:14px; text-align:left;">
-                <label style="font-size:12px;color:var(--accent);font-weight:700;">📦 Custom Group ID (Leave blank for auto-group)</label>
-                <input type="text" id="emGroupId" placeholder="e.g. pushpa-2-2024" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;box-sizing:border-box;">
-            </div>
-            <div style="margin-top:14px; margin-bottom:12px; text-align:left;">
-                <label style="font-size:12px;color:var(--accent);font-weight:700;">📂 Move File to Collection</label>
-                <select id="emMoveCol" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;font-weight:600;box-sizing:border-box;">
-                    <option value="primary">🟢 Primary</option>
-                    <option value="cloud">🔵 Cloud</option>
-                    <option value="archive">🟠 Archive</option>
-                </select>
-            </div>
-        `;
+        var extraHtml = '<div style="margin-top:14px; text-align:left;">' +
+            '<label style="font-size:12px;color:var(--accent);font-weight:700;">➕ Add Search Tags to Caption (Optional)</label>' +
+            '<input type="text" id="emAddCaption" placeholder="e.g. Ajay Devgan, 1080p, Comedy..." style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;box-sizing:border-box;">' +
+            '</div>' +
+            '<div style="margin-top:14px; text-align:left;">' +
+            '<label style="font-size:12px;color:var(--accent);font-weight:700;">📦 Custom Group ID (Leave blank for auto-group)</label>' +
+            '<input type="text" id="emGroupId" placeholder="e.g. pushpa-2-2024" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;box-sizing:border-box;">' +
+            '</div>' +
+            '<div style="margin-top:14px; margin-bottom:12px; text-align:left;">' +
+            '<label style="font-size:12px;color:var(--accent);font-weight:700;">📂 Move File to Collection</label>' +
+            '<select id="emMoveCol" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-family:inherit;font-weight:600;box-sizing:border-box;">' +
+            '<option value="primary">🟢 Primary</option>' +
+            '<option value="cloud">🔵 Cloud</option>' +
+            '<option value="archive">🟠 Archive</option>' +
+            '</select>' +
+            '</div>';
         emNameInput.insertAdjacentHTML('afterend', extraHtml);
     }
 
-    // वैल्यू सिंक
     if(document.getElementById('emMoveCol')) {
         document.getElementById('emMoveCol').value = col;
         document.getElementById('emAddCaption').value = ''; 
-        document.getElementById('emGroupId').value = groupId || ''; // वर्तमान ग्रुप आईडी लोड करें
+        document.getElementById('emGroupId').value = groupId || ''; 
     }
 
     var prevBox=document.getElementById('emPreviewBox');
@@ -465,7 +442,6 @@ async function saveAllChanges(){
     var newName=document.getElementById('emName').value.trim();
     var addCaption=document.getElementById('emAddCaption') ? document.getElementById('emAddCaption').value.trim() : '';
     var moveCol=document.getElementById('emMoveCol') ? document.getElementById('emMoveCol').value : activeCol;
-    // ✅ UPGRADE: ग्रुप आईडी वैल्यू रीड करना
     var groupId=document.getElementById('emGroupId') ? document.getElementById('emGroupId').value.trim() : '';
 
     if(!newName){showToast('File name cannot be empty!','error');return;}
@@ -488,7 +464,6 @@ async function saveAllChanges(){
         }
         showToast('\\ud83d\\udcbe Updating DB & Collection...');
         
-        // ✅ UPGRADE: पेलोड में group_id सिंक किया गया
         var payload = {
             file_id: activeFid,
             collection: activeCol,
@@ -504,8 +479,6 @@ async function saveAllChanges(){
         if(res.success||cropperInstance){
             showToast('\\u2728 File updated successfully!');
             closeCombinedModal();
-            
-            // डेटा सिंक री-लोड़ ग्रिड
             doSearch(curOff);
         }else{showToast(res.error||'Metadata save failed!','error');}
     }catch(e){showToast('Network synchronization error','error');}
@@ -513,9 +486,6 @@ async function saveAllChanges(){
 }
 """.replace("__LIMIT_PLACEHOLDER__", str(MAX_WEB_RESULTS))
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 🏠 SEARCH ZONE HTML (With Admin Toggle Injection Box)
-# ─────────────────────────────────────────────────────────────────────────────
 SEARCH_ZONE = (
     '<div class="search-zone">'
         '<div class="search-row1">'
@@ -547,7 +517,6 @@ SEARCH_ZONE = (
                     '<div class="cdd-item" data-val="none" onclick="pickMode(\'none\',\'\u26a1 Text Only (Fastest)\',this)">\u26a1 Text Only (Fastest)<span class="cdd-radio"><span class="cdd-radio-dot"></span></span></div>'
                 '</div>'
             '</div>'
-            # ⚡ UPGRADE: एडमिन के लिए लाइव 'सर्च मोड व्यू' स्विच टॉगल (शुरुआत में डिफ़ॉल्ट रूप से हिडन रहेगा)
             '<div class="cdd-wrap" id="cddViewWrap" style="display:none">'
                 '<div class="cdd-btn" id="cddViewBtn" onclick="toggleCdd(\'view\')">'
                     '<span id="cddViewLabel">👥 Group View</span>'
@@ -579,9 +548,7 @@ SEARCH_ZONE = (
     '<div class="toast" id="toast"></div>'
 )
 
-# ✅ OPTIMIZATION 1: Pre-compile the entire body string ONCE when the app starts.
 DASHBOARD_BODY = CARD_CSS + SEARCH_ZONE + f"<script>{JS_ENGINE}</script>"
-
 
 @dashboard_routes.get('/dashboard')
 async def dash(req):
@@ -595,7 +562,6 @@ async def dash(req):
 
     return build_page("Home - Fast Finder", DASHBOARD_BODY, "", "dash", role)
 
-
 @dashboard_routes.get('/logout')
 async def logout(req):
     s_user = req.cookies.get('user_session')
@@ -604,7 +570,6 @@ async def logout(req):
     res = web.HTTPFound('/login')
     res.del_cookie('user_session')
     return res
-
 
 @dashboard_routes.get('/premium_expired')
 async def premium_expired(req):
@@ -627,7 +592,6 @@ async def premium_expired(req):
         '</div>'
     )
     return build_page("Premium Expired", form_wrapper("Premium Expired", content), "login-bg")
-
 
 @dashboard_routes.get('/health')
 async def koyeb_health_check(req):
