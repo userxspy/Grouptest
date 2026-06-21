@@ -44,14 +44,21 @@ _stats_cache_time = 0
 STATS_CACHE_TTL = 60  
 
 # ─────────────────────────────────────────────────────────
-# 🧹 REGEX NAME CLEANER — (आपके फ़ाइल फ़ॉर्मेट के लिए विशेष रूप से निर्मित)
+# 🧹 SMART REGEX NAME CLEANER (Multi-Separator Adaptive Pack)
 # ─────────────────────────────────────────────────────────
 def extract_clean_name(file_name: str) -> str:
     if not file_name:
         return "Unknown File"
+    
+    # Step 1: शुरुआत से ब्रैकेट और साइज उड़ाओ: [835.72 MB]
     name = re.sub(r'^\[.*?\]', '', file_name).strip()
-    if '|' in name:
-        name = name.split('|')[0].strip()
+    
+    # Step 2: कस्टमाइज्ड स्प्लिट - चाहे '|' हो, 'I' हो, 'l' (L) हो, या '-' हो, परफेक्ट डिटेक्ट करेगा
+    parts = re.split(r'\s+[\|Il\-\–\—]\s+', name)
+    if parts:
+        name = parts[0].strip()
+        
+    # Step 3: अंतिम फ़ाइल एक्सटेंशन साफ करो
     name = re.sub(r'\.(mp4|mkv|mov|avi|ts|wmv)$', '', name, flags=re.IGNORECASE).strip()
     return name
 
