@@ -5,12 +5,8 @@ from utils import temp
 
 dashboard_routes = web.RouteTableDef()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 🎨 NEW CARD UI CSS — With Grouping Components & Shimmer Effect
-# ─────────────────────────────────────────────────────────────────────────────
 CARD_CSS = """
 <style>
-/* ── Search zone ── */
 .search-zone{padding:16px 20px 0}
 .search-row1{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .search-row2{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px}
@@ -83,7 +79,7 @@ CARD_CSS = """
 .cloud .source-dot{background:#60a5fa;box-shadow:0 0 4px #60a5fa}
 .archive .source-dot{background:#fb923c;box-shadow:0 0 4px #fb923c}
 
-.poster-admin{position:absolute;bottom:0;left:0;right:0;display:flex;gap:6px;padding:7px 8px;opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .22s ease;pointer-events:none;z-index:4}
+.poster-admin{position:absolute;bottom:0;left:0;right:0;display:flex;gap:4px;padding:7px 8px;opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .22s ease;pointer-events:none;z-index:4}
 .file-card.admin-active .poster-admin{opacity:1;transform:translateY(0);pointer-events:all}
 .text-admin-row{display:none;gap:5px;padding:5px 11px 0}
 .file-card.admin-active .text-admin-row{display:flex}
@@ -122,9 +118,6 @@ CARD_CSS = """
 </style>
 """
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 🎬 JS ENGINE — Fixed String Concatenation & Absolute Cross-Network Isolation
-# ─────────────────────────────────────────────────────────────────────────────
 JS_ENGINE = """
 var curQ='',curOff=0,nextOff='',curCol='all',curPage=1;
 var pMode=localStorage.getItem('posterMode')||'tg';
@@ -258,11 +251,15 @@ async function doSearch(o){
             if(d.is_admin){
                 var safeName=f.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'");
                 if(f.is_group) {
-                    adminBtns='<div class="poster-admin">'+
-                        '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\\\''+f.group_id+'\\\');showToast(\\\'📋 Group ID Copied!\\\')">📋 Copy Group ID</button>'+
+                    // ✅ UPGRADE: ग्रुप व्यू में अब 'Copy ID' के साथ 'Edit' और 'Delete' भी मिलेंगे!
+                    adminBtns='<div class="poster-admin" style="flex-direction:column; gap:4px; padding:4px 6px;">'+
+                        '<button class="btn-edit" style="font-size:10px; background:#1e3a5f; padding:4px 0;" onclick="event.stopPropagation();navigator.clipboard.writeText(\\\''+f.group_id+'\\\');showToast(\\\'📋 Group ID Copied!\\\')">📋 Copy Group ID</button>'+
+                        '<div style="display:flex; gap:4px; width:100%;">'+
+                            '<button class="btn-edit" style="padding:4px 0;" onclick="event.stopPropagation();editFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\',\\\''+safeName+'\\\',\\\''+(f.group_id||'')+'\\\')">&#9999; Edit</button>'+
+                            '<button class="btn-del" style="padding:4px 0;" onclick="event.stopPropagation();deleteFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\')">&#128465; Delete</button>'+
+                        '</div>'+
                     '</div>';
                 } else {
-                    // ✅ FIXED: मल्टिपल एस्केपिंग बैकटैक्स पैच
                     adminBtns='<div class="poster-admin">'+
                         '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\',\\\''+safeName+'\\\',\\\''+(f.group_id||'')+'\\\')">&#9999; Edit</button>'+
                         '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\')">&#128465; Delete</button>'+
@@ -293,8 +290,12 @@ async function doSearch(o){
                 if(d.is_admin){
                     var safeName2=f.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'");
                     if(f.is_group) {
-                        textInfo+='<div class="text-admin-row">'+
-                            '<button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText(\\\''+f.group_id+'\\\');showToast(\\\'📋 Group ID Copied!\\\')">📋 Copy Group ID</button>'+
+                        textInfo+='<div class="text-admin-row" style="flex-direction:column; gap:4px; width:100%;">'+
+                            '<button class="btn-edit" style="font-size:10px; background:#1e3a5f;" onclick="event.stopPropagation();navigator.clipboard.writeText(\\\''+f.group_id+'\\\');showToast(\\\'📋 Group ID Copied!\\\')">📋 Copy Group ID</button>'+
+                            '<div style="display:flex; gap:4px; width:100%;">'+
+                                '<button class="btn-edit" onclick="event.stopPropagation();editFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\',\\\''+safeName2+'\\\',\\\''+(f.group_id||'')+'\\\')">&#9999; Edit</button>'+
+                                '<button class="btn-del" onclick="event.stopPropagation();deleteFile(\\\''+f.file_id+'\\\',\\\''+f.raw_collection+'\\\')">&#128465; Delete</button>'+
+                            '</div>'+
                         '</div>';
                     } else {
                         textInfo+='<div class="text-admin-row">'+
@@ -320,7 +321,8 @@ async function doSearch(o){
                     else if(nLower.includes('4k') || nLower.includes('uhd')) qLabel = '4K UHD';
                     else qLabel = subFile.size;
                     
-                    qualityChipsHtml += '<button class="q-chip-btn" onclick="event.stopPropagation();window.open(\\\''+subFile.watch+'\\\,\\\'_blank\\\')">' + qLabel + ' ('+subFile.size+')</button>';
+                    // ✅ FIX: कोटेशन टाइपो सुधारा गया (\\\',\\\'_blank\\\')
+                    qualityChipsHtml += '<button class="q-chip-btn" onclick="event.stopPropagation();window.open(\\\''+subFile.watch+'\\\',\\\'_blank\\\')">' + qLabel + ' ('+subFile.size+')</button>';
                 });
                 qualityChipsHtml += '</div>';
             }
