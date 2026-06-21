@@ -14,9 +14,8 @@ from aiohttp import web
 
 # कस्टमाइज्ड कोर यूटिल्स और कन्फर्म कंट्रोल्स इम्पोर्ट्स
 from utils import temp, get_size, is_rate_limited, is_premium
-# ✅ SYNC: THUMBNAIL_STORAGE_CHANNEL को इम्पोर्ट किया गया है पृथक स्टोरेज के लिए
 from info import BIN_CHANNEL, ADMINS, BOT_TOKEN, MAX_WEB_RESULTS, MAX_THUMB_CACHE, IS_PREMIUM, USE_CAPTION_FILTER, THUMBNAIL_STORAGE_CHANNEL
-# यहाँ db_stats के लिए 'db as filter_db' ऐड किया गया है
+# database स्तर से अपग्रेडेड get_search_results सिंक
 from database.ia_filterdb import COLLECTIONS, get_search_results, db as filter_db
 from database.users_chats_db import db
 
@@ -139,17 +138,18 @@ async def _get_or_fetch_thumb(fid, col_name="primary", is_retry=False):
 
 
 # ─────────────────────────────────────────────────────────
-# 🔄 BACKGROUND PRE-FETCH WORKER (Controlled Warmup Load)
+# 🔄 BACKGROUND PRE-FETCH WORKER (With view_mode Parameter)
 # ─────────────────────────────────────────────────────────
-async def bg_prefetch_worker(tg_id, q, col, mode, prefetch_offset, lim):
+async def bg_prefetch_worker(tg_id, q, col, mode, prefetch_offset, lim, view_mode="group"):
     try:
-        cache_key = f"{tg_id}_{q}_{col}_{mode}_{prefetch_offset}"
+        # ✅ SYNC: कैश की को विशिष्ट बनाने के लिए view_mode जोड़ा गया
+        cache_key = f"{tg_id}_{q}_{col}_{mode}_{view_mode}_{prefetch_offset}"
         if cache_key in PREFETCH_CACHE:
             return
 
         strict_q = _build_strict_query(q)
         docs, next_off, _, _ = await get_search_results(
-            strict_q, lim, offset=prefetch_offset, collection_type=col, bypass_count=True
+            strict_q, lim, offset=prefetch_offset, collection_type=col, bypass_count=True, view_mode=view_mode
         )
 
         if docs:
@@ -210,7 +210,7 @@ async def get_user_role(req):
 
 
 # ─────────────────────────────────────────────────────────
-# 🔍 SEARCH API — Smart Pre-fetch Grid Engine (orjson dumps)
+# 🔍 SEARCH API — Smart Pre-fetch Grid Engine (With Toggle Sync)
 # ─────────────────────────────────────────────────────────
 @search_routes.get("/api/search")
 async def api_search(req):
@@ -224,6 +224,8 @@ async def api_search(req):
     off = req.query.get("offset", "0")
     col = req.query.get("col", "all").lower()
     mode = req.query.get("mode", "tg").lower()
+    # ✅ UPGRADE: फ्रंटएंड से सर्च व्यू मोड (group या single) प्राप्त करना
+    view_mode = req.query.get("view_mode", "group").lower()
 
     if not q:
         return web.json_response({"results": [], "total": 0, "next_offset": ""}, dumps=fast_json)
@@ -235,13 +237,14 @@ async def api_search(req):
     lim = MAX_WEB_RESULTS
 
     if off == 0:
-        trend_key = f"{col}_{mode}_{q.lower()}"
+        # ✅ SYNC: कैश आइसोलेशन के लिए कुंजी में view_mode जोड़ा गया
+        trend_key = f"{col}_{mode}_{view_mode}_{q.lower()}"
         now_ts = time.time()
         if trend_key in TRENDING_CACHE and TRENDING_CACHE[trend_key]["expiry"] > now_ts:
             cached = TRENDING_CACHE[trend_key]
             
             if cached["next_offset"]:
-                asyncio.create_task(bg_prefetch_worker(tg_id, q, col, mode, cached["next_offset"], lim))
+                asyncio.create_task(bg_prefetch_worker(tg_id, q, col, mode, cached["next_offset"], lim, view_mode=view_mode))
 
             return web.json_response({
                 "results": cached["results"],
@@ -250,7 +253,8 @@ async def api_search(req):
                 "is_admin": role == "admin"
             }, dumps=fast_json)
 
-    current_cache_key = f"{tg_id}_{q}_{col}_{mode}_{off}"
+    # ✅ SYNC: प्रीफ़ेच कैश कुंजी सिंक
+    current_cache_key = f"{tg_id}_{q}_{col}_{mode}_{view_mode}_{off}"
     all_m = []
     next_offset = ""
 
@@ -261,13 +265,13 @@ async def api_search(req):
     if not all_m:
         strict_q = _build_strict_query(q)
         all_m, next_offset, _, _ = await get_search_results(
-            strict_q, lim, offset=off, collection_type=col, bypass_count=True
+            strict_q, lim, offset=off, collection_type=col, bypass_count=True, view_mode=view_mode
         )
 
     has_more = bool(next_offset)
 
     if has_more:
-        asyncio.create_task(bg_prefetch_worker(tg_id, q, col, mode, next_offset, lim))
+        asyncio.create_task(bg_prefetch_worker(tg_id, q, col, mode, next_offset, lim, view_mode=view_mode))
 
     results_list = []
 
@@ -285,21 +289,51 @@ async def api_search(req):
             tg_thumb = f"/api/thumb?file_id={db_id}&col={source_collection_name}&v={v_salt}"
             poster_url = tg_thumb
 
-        results_list.append({
-            "file_id": db_id,
-            "name": d.get("file_name", "Unknown File"),
-            "size": get_size(d.get("file_size", 0)),
-            "type": d.get("file_type", "document").upper(),
-            "source": source_collection_name.capitalize(),
-            "raw_collection": source_collection_name,
-            "poster": poster_url,
-            "tg_thumb": tg_thumb,
-            "watch": f"/setup_stream?file_id={fid}&mode=watch",
-            "download": f"/setup_stream?file_id={fid}&mode=download",
-        })
+        # ✅ UPGRADE: अगर बैकएंड से बंडल 'Group Card' आया है, तो सब-फाइल्स का एरे मैप करें
+        if d.get("is_group"):
+            sub_files = []
+            for f in d.get("files", []):
+                sub_fid = f.get("file_ref") or f.get("_id")
+                sub_files.append({
+                    "file_id": f.get("file_id"),
+                    "name": f.get("file_name", "Unknown File"),
+                    "size": get_size(f.get("file_size", 0)),
+                    "watch": f"/setup_stream?file_id={sub_fid}&mode=watch",
+                    "download": f"/setup_stream?file_id={sub_fid}&mode=download",
+                })
+            
+            results_list.append({
+                "file_id": db_id,
+                "name": d.get("file_name", "Unknown File"),
+                "size": f"{len(sub_files)} Quality Links Available",
+                "type": d.get("file_type", "document").upper(),
+                "source": source_collection_name.capitalize(),
+                "raw_collection": source_collection_name,
+                "poster": poster_url,
+                "tg_thumb": tg_thumb,
+                "is_group": True,
+                "group_id": d.get("group_id", ""),
+                "files": sub_files # फ्रंटएंड जावास्क्रिप्ट इसी लिस्ट से बटन्स रेंडर करेगी
+            })
+        else:
+            # सिंगल नॉर्मल फ़ाइल मैप लॉजिक
+            results_list.append({
+                "file_id": db_id,
+                "name": d.get("file_name", "Unknown File"),
+                "size": get_size(d.get("file_size", 0)),
+                "type": d.get("file_type", "document").upper(),
+                "source": source_collection_name.capitalize(),
+                "raw_collection": source_collection_name,
+                "poster": poster_url,
+                "tg_thumb": tg_thumb,
+                "is_group": False,
+                "group_id": d.get("group_id", ""),
+                "watch": f"/setup_stream?file_id={fid}&mode=watch",
+                "download": f"/setup_stream?file_id={fid}&mode=download",
+            })
 
     if off == 0 and results_list:
-        trend_key = f"{col}_{mode}_{q.lower()}"
+        trend_key = f"{col}_{mode}_{view_mode}_{q.lower()}"
         TRENDING_CACHE[trend_key] = {
             "results": results_list,
             "next_offset": next_offset,
@@ -384,7 +418,7 @@ async def setup_stream_post(req):
 
 
 # ─────────────────────────────────────────────────────────
-# ⚖️ ADMIN CONTROLS: EDIT, ADD CAPTION & TRANSFER PIPELINE
+# ⚖️ ADMIN CONTROLS: EDIT, ADD CAPTION, TRANSFER & GROUP MANAGER
 # ─────────────────────────────────────────────────────────
 @search_routes.post("/api/delete")
 async def api_delete(req):
@@ -416,6 +450,8 @@ async def api_edit_name(req):
         new_name = data.get("new_name", "").strip()
         add_caption = data.get("add_caption", "").strip()
         target_col = data.get("target_collection", col).lower()
+        # ✅ UPGRADE: एडिट पैनल से ग्रुप आईडी रिप्लेसमेंट इनपुट रीड करना
+        group_id = data.get("group_id", "").strip()
 
         if not fid or col not in COLLECTIONS or target_col not in COLLECTIONS:
             return web.json_response({"error": "Missing structural inputs!"}, status=400, dumps=fast_json)
@@ -434,6 +470,10 @@ async def api_edit_name(req):
                 update_fields["caption"] = f"{old_caption}\n\n{add_caption}"
             else:
                 update_fields["caption"] = add_caption
+
+        # ✅ UPGRADE: ग्रुप आईडी को ओवरराइट/अपडेट या ब्लैंक (Clear) करने का मास्टर सिंक
+        if "group_id" in data:
+            update_fields["group_id"] = group_id
 
         if col != target_col:
             doc.update(update_fields)  
@@ -485,7 +525,6 @@ async def api_upload_thumb(req):
 
         with io.BytesIO(image_bytes) as img_buffer:
             img_buffer.name = "poster.jpg"
-            # ✅ UPGRADE: पुराने मिक्स्ड 'BIN_CHANNEL' के बजाय पृथक 'THUMBNAIL_STORAGE_CHANNEL' का उपयोग
             msg = await temp.BOT.send_photo(chat_id=THUMBNAIL_STORAGE_CHANNEL, photo=img_buffer)
 
         if not msg or not msg.photo:
@@ -501,7 +540,6 @@ async def api_upload_thumb(req):
             new_thumb_id = msg.photo.file_id
 
         db_save_value = f"TG_ID:{new_thumb_id}"
-        # ✅ UPGRADE: डेटाबेस में वेब कस्टमाइज्ड सिंक लॉक 'thumb_source: web' और 'is_thumb_permanent: True' लॉक किया गया
         await COLLECTIONS[collection_field].update_one(
             {"_id": file_id_field},
             {"$set": {"thumb_url": db_save_value, "thumb_source": "web", "is_thumb_permanent": True}}
